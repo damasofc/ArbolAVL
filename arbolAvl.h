@@ -22,10 +22,20 @@ public:
             return -1;
         return buscar(codigo,&(*_raiz));
     }
-    void imprimir()
+    void imprimirPreOrder()
     {
-        cout<<"Datos en el arbol: \n";
-        imprimirArbol(_raiz);
+        cout<<"Datos en el arbol[PreOrder]: \n";
+        imprimirArbolPre(_raiz);
+    }
+    void imprimirPosOrder()
+    {
+        cout<<"Datos en el arbol[PosOrder]: \n";
+        imprimirArbolPos(_raiz);
+    }
+    void imprimirInOrder()
+    {
+        cout<<"Datos en el arbol[InOrder]: \n";
+        imprimirArbolIn(_raiz);
     }
     void cargarArbol(string nameArchivo)
     {
@@ -59,12 +69,12 @@ private:
         if((*sr)->hijo_izquierdo == NULL)
             (*sr)->alturaIzq = 0;
         else
-            (*sr)->alturaIzq = max((*sr)->hijo_izquierdo->alturaIzq,(*sr)->hijo_izquierdo->alturaDer);
+            (*sr)->alturaIzq = max((*sr)->hijo_izquierdo->alturaIzq,(*sr)->hijo_izquierdo->alturaDer)+1;
         sigIzq->hijo_derecho = *sr;
         if(sigIzq->hijo_derecho == NULL)
             sigIzq->alturaDer = 0;
         else
-            sigIzq->alturaDer = max(sigIzq->hijo_derecho->alturaIzq,sigIzq->hijo_derecho->alturaDer);
+            sigIzq->alturaDer = max(sigIzq->hijo_derecho->alturaIzq,sigIzq->hijo_derecho->alturaDer)+1;
         *sr = sigIzq;    
     }
     void rotacionIzq(ItemMemory** sr)
@@ -74,12 +84,12 @@ private:
         if((*sr)->hijo_derecho == NULL)
             (*sr)->alturaDer = 0;
         else
-            (*sr)->alturaDer = max((*sr)->hijo_derecho->alturaIzq,(*sr)->hijo_derecho->alturaDer);
+            (*sr)->alturaDer = max((*sr)->hijo_derecho->alturaIzq,(*sr)->hijo_derecho->alturaDer)+1;
         sigDer->hijo_izquierdo = *sr;
         if(sigDer->hijo_izquierdo == NULL)
             sigDer->alturaIzq = 0;
         else
-            sigDer->alturaDer = max(sigDer->hijo_izquierdo->alturaIzq,sigDer->hijo_izquierdo->alturaDer);
+            sigDer->alturaIzq = max(sigDer->hijo_izquierdo->alturaIzq,sigDer->hijo_izquierdo->alturaDer)+1;
         *sr = sigDer;    
     }
     void rotDobleIzq(ItemMemory** sr)
@@ -162,18 +172,38 @@ private:
             return buscar(codigo,raiz->hijo_derecho);
         return buscar(codigo,raiz->hijo_izquierdo);
     }
-    void imprimirArbol(ItemMemory* sb)
+    void imprimirArbolPre(ItemMemory* sb)
     {
         if(sb == NULL)
         {
             return;
         }
-        cout<<"***************"<<endl;
-        cout<<sb->codigo<<endl;
-        cout<<sb->nombre<<endl;
-        cout<<sb->dpto<<endl;
-        imprimirArbol(sb->hijo_izquierdo);
-        imprimirArbol(sb->hijo_derecho);
+        cout<<sb->codigo<<",";
+
+        imprimirArbolPre(sb->hijo_izquierdo);
+        imprimirArbolPre(sb->hijo_derecho);
+    }
+    void imprimirArbolPos(ItemMemory* sb)
+    {
+        if(sb == NULL)
+        {
+            return;
+        }
+        imprimirArbolPos(sb->hijo_izquierdo);
+        imprimirArbolPos(sb->hijo_derecho);
+        cout<<sb->codigo<<",";
+
+    }
+    void imprimirArbolIn(ItemMemory* sb)
+    {
+        if(sb == NULL)
+        {
+            return;
+        }
+        imprimirArbolIn(sb->hijo_izquierdo);
+        cout<<sb->codigo<<",";
+        imprimirArbolIn(sb->hijo_derecho);
+
     }
     int charToInt(char* x)
     {
