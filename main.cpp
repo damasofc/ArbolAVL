@@ -18,9 +18,8 @@ int main()
     ItemMemory* raiz12 = new ItemMemory(51,"Iris","conta");
     // ItemMemory* raiz5 = new ItemMemory(5,"Jaun","conta");
     //ItemMemory* raiz5 = new ItemMemory(5,"Jaun","conta");
-    ArbolAvl* arbol = new ArbolAvl();
+    ArbolAvl* arbol = new ArbolAvl("arbol.dat");
     arbol->imprimirInOrder();
-    arbol->cargarArbol("arbol2.dat");
     // arbol->agregarNodo(raiz);
     // arbol->agregarNodo(raiz2);
     // arbol->agregarNodo(raiz3);
@@ -35,7 +34,7 @@ int main()
     // arbol->agregarNodo(raiz12);
     // arbol->guardarArbol("arbol2.dat");
     // arbol->cargarArbol("arbolRotDoble.dat");
-    arbol->imprimirInOrder();
+    //arbol->imprimirInOrder();
 
     return 0;
 }

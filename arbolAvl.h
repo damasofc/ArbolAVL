@@ -3,9 +3,18 @@
 class ArbolAvl
 {
 public:
-    ArbolAvl()
+    ArbolAvl(string dirArchivo)
     {
         _raiz = NULL;
+        char* arch = new char(strlen(dirArchivo.c_str()));
+        strcpy(arch,dirArchivo.c_str());
+        file = new data_file(arch);
+        if(existFile(dirArchivo.c_str()))
+        {
+            cargarArbol(dirArchivo);
+        }
+        guardarArbol(arch);
+
     }
     int agregarNodo(int codigo,char nombre[30],char dpto[15])
     {
@@ -62,6 +71,12 @@ public:
 
 private:
     ItemMemory* _raiz;
+    data_file* file;
+    bool existFile(const char *fileName)
+    {
+        ifstream infile(fileName);
+        return infile.good();
+    }
     void rotacionDer(ItemMemory** sr)
     {
         ItemMemory* sigIzq = (*sr)->hijo_izquierdo;
@@ -146,6 +161,12 @@ private:
         if(*raiz == NULL)
         {
             *raiz = nuevo;
+            item itm;
+            itm.codigo = nuevo->codigo;
+            strcpy(itm.nombre,nuevo->nombre);
+            strcpy(itm.dpto,nuevo->dpto);
+            file->escribirFinal(reinterpret_cast<char*> (&itm),sizeof(item));
+            guardarHijos(*this->file,this->_raiz);
             return 0;
         }
         if((*raiz)->codigo > nuevo->codigo)
