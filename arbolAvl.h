@@ -379,24 +379,25 @@ private:
         return retorno;
 
     }
-    void cargarHijos(item raiz,ItemMemory** raizItem)
+    int cargarHijos(item raiz,ItemMemory** raizItem)
     {
+        if(raiz.hijo_derecho == -1 && raiz.hijo_izquierdo == -1)
+            return 0;
         if(raiz.hijo_derecho != -1)
         {
             item hijoDer = getItem(*file,raiz.hijo_derecho);
             ItemMemory* raizRetorno = new ItemMemory(hijoDer.codigo,hijoDer.nombre,hijoDer.dpto);
             (*raizItem)->hijo_derecho = raizRetorno;
-            cargarHijos(hijoDer,&raizRetorno);
-            (*raizItem)->alturaDer = (*raizItem)->alturaDer +1; 
+            (*raizItem)->alturaDer = cargarHijos(hijoDer,&raizRetorno) +1;
         }
         if(raiz.hijo_izquierdo != -1)
         {
             item hijoIzq = getItem(*file,raiz.hijo_izquierdo);
             ItemMemory* raizRetorno = new ItemMemory(hijoIzq.codigo,hijoIzq.nombre,hijoIzq.dpto);
             (*raizItem)->hijo_izquierdo = raizRetorno;
-            cargarHijos(hijoIzq,&raizRetorno);
-            (*raizItem)->alturaIzq = (*raizItem)->alturaIzq +1;
-        }    
+            (*raizItem)->alturaIzq = cargarHijos(hijoIzq,&raizRetorno) +1;
+        }
+        return 1;
     }
     bool guardarRegistro(data_file file,ItemMemory* raiz)
     {
