@@ -6,24 +6,77 @@ public:
     ArbolAvl(string dirArchivo)
     {
         _raiz = NULL;
-        char* arch = new char(strlen(dirArchivo.c_str()));
+        char* arch = new char[strlen(dirArchivo.c_str())];
         strcpy(arch,dirArchivo.c_str());
         file = new data_file(arch);
-        if(existFile(dirArchivo.c_str()))
+        ifstream f(dirArchivo.c_str());
+        if(f)
         {
-            cargarArbol(dirArchivo);
+            cargarArbol(dirArchivo.c_str());
         }
-        guardarArbol(arch);
+        else
+        {
+            guardarArbol(dirArchivo.c_str());
+        }
 
     }
-    int agregarNodo(int codigo,char nombre[30],char dpto[15])
+    void prueba()
     {
-        ItemMemory* nuevo = new ItemMemory(codigo,nombre,dpto);
-        return agg(&_raiz,nuevo);
+        int i = 0;
+        int cantRegis = (file->getPosFinal()-4)/60;
+        cout<<"----------------------------------"<<endl;
+        cout<<"Padre actual: "<<getItem(*file,charToInt(file->leer(0,4))).codigo<<endl;
+        bool cont = true;
+        while(cont)
+        {
+            item act = getItem(*file,i);
+            int izq = act.hijo_izquierdo;
+            int der = act.hijo_derecho;
+            if(izq != -1)
+                izq = getItem(*file,izq).codigo;
+            if(der != -1)
+                der = getItem(*file,der).codigo;
+            cout<<"El "<<act.codigo<<" sus hijos son: izq - "<<izq<<" der - "<<der<<endl;
+            i++;
+
+            if(i >= cantRegis)
+                cont = false;
+        }
     }
-    int agregarNodo(ItemMemory* nuevo)
+    // void agregarNodo(int codigo,char nombre[30],char dpto[15])
+    // {
+    //     ItemMemory* nuevo = new ItemMemory(codigo,nombre,dpto);
+    //     int tmp = _raiz->codigo;
+    //     agg(&_raiz,nuevo);
+    //     if(this->_raiz->codigo != tmp)
+    //     {
+    //         int pos = getRegistroPosFromFile(*file,nuevo->codigo);
+    //         file->escribir(reinterpret_cast<char*>(&pos),0,4);
+    //     }
+    //     guardarHijos(*this->file,this->_raiz);
+    // }
+    void agregarNodo(ItemMemory* nuevo)
     {
-        return agg(&_raiz,nuevo);
+        if(_raiz != NULL)
+        {
+            int cod = _raiz->codigo;
+            if(agg(&_raiz,nuevo) == -1)
+                return;
+            if(cod != _raiz->codigo)
+            {
+                int pos = getRegistroPosFromFile(*file,_raiz->codigo);
+                file->escribir(reinterpret_cast<char*>(&pos),0,4);
+            }
+
+        }
+        else
+        {
+            int pos = 0;
+            file->escribir(reinterpret_cast<char*>(&pos),0,4);
+            agg(&_raiz,nuevo);
+        }
+        // prueba();
+        // guardarHijos(*file,_raiz);
     }
     int buscar(int codigo)
     {
@@ -48,25 +101,27 @@ public:
     }
     void cargarArbol(string nameArchivo)
     {
-        char* arch = new char(strlen(nameArchivo.c_str()));
-        strcpy(arch,nameArchivo.c_str());
-        data_file f(arch);
-        int posRaiz = charToInt(f.leer(0,4));
-        item raiz = getItem(f,posRaiz);
+        int posRaiz = charToInt(file->leer(0,4));
+        if(posRaiz == -1)
+            return;
+        item raiz = getItem(*file,posRaiz);
         _raiz = new ItemMemory(raiz.codigo,raiz.nombre,raiz.dpto);
-        cargarHijos(f,raiz,&_raiz);
+        cargarHijos(raiz,&_raiz);
+    }
+    void eliminar(int codigo)
+    {
+        elimi(codigo,&_raiz);
     }
     void guardarArbol(string archivo)
     {
-        char* name = new char[sizeof(archivo)];
-        strcpy(name,archivo.c_str());
-        data_file file(name);
-        int posInicial = 0;
-        file.abrir();
-        file.escribir(reinterpret_cast<char*>(&posInicial),0,sizeof(int));
-        guardarRegistro(file,_raiz);
+        int posInicial = -1;
+        file->abrir();
+        file->escribir(reinterpret_cast<char*>(&posInicial),0,sizeof(int));
+        if(posInicial == -1)
+            return;
+        guardarRegistro(*file,_raiz);
         //ahora le asignare la posicion de los hijos izquierdos y derechos en el archivo
-        guardarHijos(file,_raiz);
+        guardarHijos(*file,_raiz);
     }
 
 private:
@@ -77,35 +132,87 @@ private:
         ifstream infile(fileName);
         return infile.good();
     }
+    int elimi(int codigo, ItemMemory** sr)
+    {
+        if((*sr)->codigo == codigo)
+        {
+            ItemMemory* tmp = *sr;
+            if((*sr)->hijo_izquierdo == NULL && (*sr)->hijo_derecho == NULL)
+            {
+                *sr = NULL;
+                ItemMemory* padre = padreDe(_raiz,*sr);
+                actualizarHijosFile(padre,padre->hijo_derecho,padre->hijo_izquierdo);
+            }
+            delete tmp;
+        }
+        else if((*sr)->codigo > codigo)
+        {
+            return elimi(codigo,&(*sr)->hijo_izquierdo);
+        }
+        else if((*sr)->codigo < codigo)
+        {
+            return elimi(codigo,&(*sr)->hijo_derecho);
+        }
+    }
     void rotacionDer(ItemMemory** sr)
     {
+        ItemMemory* padreSr = padreDe(_raiz,*sr);
         ItemMemory* sigIzq = (*sr)->hijo_izquierdo;
         (*sr)->hijo_izquierdo = sigIzq->hijo_derecho;
         if((*sr)->hijo_izquierdo == NULL)
             (*sr)->alturaIzq = 0;
         else
+        {
             (*sr)->alturaIzq = max((*sr)->hijo_izquierdo->alturaIzq,(*sr)->hijo_izquierdo->alturaDer)+1;
+        }
+        actualizarHijosFile(*sr,(*sr)->hijo_derecho,sigIzq->hijo_derecho);
         sigIzq->hijo_derecho = *sr;
         if(sigIzq->hijo_derecho == NULL)
             sigIzq->alturaDer = 0;
         else
+        {
             sigIzq->alturaDer = max(sigIzq->hijo_derecho->alturaIzq,sigIzq->hijo_derecho->alturaDer)+1;
-        *sr = sigIzq;    
+        }
+        actualizarHijosFile(sigIzq,*sr,sigIzq->hijo_izquierdo);
+        if(padreSr != NULL)
+        {
+            if(padreSr->hijo_derecho != NULL && padreSr->hijo_derecho->codigo == (*sr)->codigo)
+                actualizarHijosFile(padreSr,sigIzq,padreSr->hijo_izquierdo);
+            else
+                actualizarHijosFile(padreSr,padreSr->hijo_derecho,sigIzq);
+
+        }
+        *sr = sigIzq;  
     }
     void rotacionIzq(ItemMemory** sr)
     {
+        ItemMemory* padreSr = padreDe(_raiz,*sr);
         ItemMemory* sigDer = (*sr)->hijo_derecho;
         (*sr)->hijo_derecho = sigDer->hijo_izquierdo;
         if((*sr)->hijo_derecho == NULL)
             (*sr)->alturaDer = 0;
         else
+        {
             (*sr)->alturaDer = max((*sr)->hijo_derecho->alturaIzq,(*sr)->hijo_derecho->alturaDer)+1;
+        }
+        actualizarHijosFile(*sr,sigDer->hijo_izquierdo,(*sr)->hijo_izquierdo);
         sigDer->hijo_izquierdo = *sr;
         if(sigDer->hijo_izquierdo == NULL)
             sigDer->alturaIzq = 0;
         else
+        {
             sigDer->alturaIzq = max(sigDer->hijo_izquierdo->alturaIzq,sigDer->hijo_izquierdo->alturaDer)+1;
-        *sr = sigDer;    
+        }
+        actualizarHijosFile(sigDer,sigDer->hijo_derecho,*sr);
+        if(padreSr != NULL)
+        {
+            if(padreSr->hijo_derecho != NULL && padreSr->hijo_derecho->codigo == (*sr)->codigo)
+                actualizarHijosFile(padreSr,sigDer,padreSr->hijo_izquierdo);
+            else
+                actualizarHijosFile(padreSr,padreSr->hijo_derecho,sigDer);
+
+        }
+        *sr = sigDer; 
     }
     void rotDobleIzq(ItemMemory** sr)
     {
@@ -120,7 +227,10 @@ private:
     void balancear(ItemMemory** sr)
     {
         if(abs((*sr)->alturaIzq - (*sr)->alturaDer) < 2)
+        {
+            actualizarHijosFile(*sr,(*sr)->hijo_derecho,(*sr)->hijo_izquierdo);
             return;
+        }
         if((*sr)->alturaDer > (*sr)->alturaIzq)
         {
             if((*sr)->hijo_derecho->alturaDer >= (*sr)->hijo_derecho->alturaIzq)
@@ -144,6 +254,25 @@ private:
             }
         }
     }
+    ItemMemory* padreDe(ItemMemory* raiz,ItemMemory* hijo)
+    {
+        
+        if(raiz == NULL || raiz == hijo)
+            return NULL;
+        if(raiz->hijo_izquierdo == hijo)
+            return raiz;
+        if(raiz->hijo_derecho == hijo)
+            return raiz;
+        else
+        {
+            ItemMemory* padre = padreDe(raiz->hijo_izquierdo,hijo);
+            if(padre == NULL)
+            {
+                return padreDe(raiz->hijo_derecho,hijo);
+            }
+            return padre;
+        }
+    }
     int abs(int x)
     {
         if(x < 0)
@@ -162,11 +291,12 @@ private:
         {
             *raiz = nuevo;
             item itm;
+            itm.hijo_derecho -1;
+            itm.hijo_izquierdo = -1;
             itm.codigo = nuevo->codigo;
             strcpy(itm.nombre,nuevo->nombre);
             strcpy(itm.dpto,nuevo->dpto);
             file->escribirFinal(reinterpret_cast<char*> (&itm),sizeof(item));
-            guardarHijos(*this->file,this->_raiz);
             return 0;
         }
         if((*raiz)->codigo > nuevo->codigo)
@@ -249,21 +379,23 @@ private:
         return retorno;
 
     }
-    void cargarHijos(data_file f,item raiz,ItemMemory** raizItem)
+    void cargarHijos(item raiz,ItemMemory** raizItem)
     {
         if(raiz.hijo_derecho != -1)
         {
-            item hijoDer = getItem(f,raiz.hijo_derecho);
+            item hijoDer = getItem(*file,raiz.hijo_derecho);
             ItemMemory* raizRetorno = new ItemMemory(hijoDer.codigo,hijoDer.nombre,hijoDer.dpto);
             (*raizItem)->hijo_derecho = raizRetorno;
-            cargarHijos(f,hijoDer,&raizRetorno);
+            cargarHijos(hijoDer,&raizRetorno);
+            (*raizItem)->alturaDer = (*raizItem)->alturaDer +1; 
         }
         if(raiz.hijo_izquierdo != -1)
         {
-            item hijoIzq = getItem(f,raiz.hijo_izquierdo);
+            item hijoIzq = getItem(*file,raiz.hijo_izquierdo);
             ItemMemory* raizRetorno = new ItemMemory(hijoIzq.codigo,hijoIzq.nombre,hijoIzq.dpto);
             (*raizItem)->hijo_izquierdo = raizRetorno;
-            cargarHijos(f,hijoIzq,&raizRetorno);
+            cargarHijos(hijoIzq,&raizRetorno);
+            (*raizItem)->alturaIzq = (*raizItem)->alturaIzq +1;
         }    
     }
     bool guardarRegistro(data_file file,ItemMemory* raiz)
@@ -282,6 +414,27 @@ private:
             guardarRegistro(file,raiz->hijo_izquierdo);
             guardarRegistro(file,raiz->hijo_derecho);
             return true;
+        }
+    }
+    void actualizarHijosFile(ItemMemory* sr,ItemMemory* hijo_der = NULL,ItemMemory* hijo_izq = NULL)
+    {
+        if(sr == NULL)
+            return;
+        int posInFile = getRegistroPosFromFile(*file,sr->codigo);
+        if( posInFile != -1)
+        {
+            item itm = getItem(*file,posInFile);
+            itm.codigo = sr->codigo;
+            itm.hijo_derecho = -1;
+            itm.hijo_izquierdo = -1;
+            memcpy(itm.nombre,sr->nombre,30);
+            memcpy(itm.dpto,sr->dpto,15);
+            if(hijo_der != NULL)
+                itm.hijo_derecho = getRegistroPosFromFile(*file,hijo_der->codigo);
+            if(hijo_izq != NULL)                
+                itm.hijo_izquierdo = getRegistroPosFromFile(*file,hijo_izq->codigo);
+            int setOff = 4+(posInFile*sizeof(item));
+            file->escribir(reinterpret_cast<char*>(&itm),setOff,sizeof(item));
         }
     }
     void guardarHijos(data_file file,ItemMemory* raiz)
