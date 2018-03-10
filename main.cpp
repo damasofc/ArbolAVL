@@ -25,15 +25,17 @@ int main()
     // arbol->agregarNodo(raiz4);
 
     // arbol->agregarNodo(raiz5);
-    arbol->agregarNodo(raiz6);
-    arbol->agregarNodo(raiz7);
-    arbol->agregarNodo(raiz8);
-    arbol->agregarNodo(raiz9);
-    arbol->agregarNodo(raiz10);
-    arbol->agregarNodo(raiz11);
-    arbol->agregarNodo(raiz12);
+    // arbol->agregarNodo(raiz6);
+    // arbol->agregarNodo(raiz7);
+    // arbol->agregarNodo(raiz8);
+    // arbol->agregarNodo(raiz9);
+    // arbol->agregarNodo(raiz10);
+    // arbol->agregarNodo(raiz11);
+    // arbol->agregarNodo(raiz12);
     // arbol->prueba();
-    arbol->imprimirInOrder();
+    arbol->imprimirPreOrder();
+    // arbol->eliminar(22);
+    // arbol->imprimirPreOrder();
     // arbol->guardarArbol("arbol2.dat");
     // arbol->cargarArbol("arbolRotDoble.dat");
     // arbol->imprimirInOrder();

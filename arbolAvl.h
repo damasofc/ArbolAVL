@@ -86,7 +86,7 @@ public:
     }
     void imprimirPreOrder()
     {
-        cout<<"Datos en el arbol[PreOrder]: \n";
+        cout<<"\nDatos en el arbol[PreOrder]: \n";
         imprimirArbolPre(_raiz);
     }
     void imprimirPosOrder()
@@ -132,27 +132,85 @@ private:
         ifstream infile(fileName);
         return infile.good();
     }
-    int elimi(int codigo, ItemMemory** sr)
+    ItemMemory* minNode(ItemMemory* sr)
     {
+        ItemMemory* curr = sr;
+        while(curr->hijo_izquierdo != NULL)
+            curr = curr->hijo_izquierdo;
+        return curr;
+    }
+    ItemMemory* elimi(int codigo, ItemMemory** sr)
+    {
+        if(*sr == NULL)
+            return *sr;
         if((*sr)->codigo == codigo)
         {
-            ItemMemory* tmp = *sr;
-            if((*sr)->hijo_izquierdo == NULL && (*sr)->hijo_derecho == NULL)
+            ItemMemory* padre = padreDe(_raiz,*sr);
+            if((*sr)->hijo_izquierdo == NULL || (*sr)->hijo_derecho == NULL)
             {
-                *sr = NULL;
-                ItemMemory* padre = padreDe(_raiz,*sr);
+                ItemMemory* tmp = (*sr)->hijo_derecho != NULL?(*sr)->hijo_derecho:(*sr)->hijo_izquierdo;
+                if(tmp == NULL)
+                {
+                    if(padre->hijo_derecho != NULL && (*sr)->codigo == padre->hijo_derecho->codigo )
+                    {
+                        padre->alturaDer = 0;
+                    }
+                    else
+                        padre->alturaIzq = 0;
+                    tmp = *sr;
+                    *sr = NULL;
+                }
+                else
+                {
+                    if(padre->hijo_derecho != NULL && (*sr)->codigo == padre->hijo_derecho->codigo )
+                    {
+                        padre->alturaDer = 1;
+                    }
+                    else
+                        padre->alturaIzq = 1;
+                    **sr = *tmp;
+                }
+                ItemMemory* tmpa = padreDe(_raiz,padre);
+                int pre = padre->codigo;
+                balancear(&padre);
+                if(tmpa != NULL)
+                {
+                    if(tmpa->hijo_derecho != NULL && tmpa->hijo_derecho->codigo == pre)
+                        tmpa->hijo_derecho = padre;
+                    else
+                        tmpa->hijo_izquierdo = padre;
+                }
                 actualizarHijosFile(padre,padre->hijo_derecho,padre->hijo_izquierdo);
+                delete tmp;
             }
-            delete tmp;
+            else
+            {
+                bool raizEli = false;
+                ItemMemory* min = minNode((*sr)->hijo_derecho);
+                if(_raiz->codigo == (*sr)->codigo)
+                {
+                    int pos = getRegistroPosFromFile(*file,min->codigo);
+                    file->escribir(reinterpret_cast<char*>(&pos),0,4);
+                    raizEli = true;
+                }
+                (*sr)->codigo = min->codigo;
+                //aca modifico la raiz en el file, si es necesario:
+                (*sr)->hijo_derecho = elimi(min->codigo,&(*sr)->hijo_derecho);
+                balancear(&(*sr)->hijo_derecho);
+                balancear(sr);
+                if(!raizEli)
+                    actualizarHijosFile(padre,padre->hijo_derecho,padre->hijo_izquierdo);
+            }
         }
         else if((*sr)->codigo > codigo)
         {
-            return elimi(codigo,&(*sr)->hijo_izquierdo);
+            (*sr)->hijo_izquierdo = elimi(codigo,&(*sr)->hijo_izquierdo);
         }
         else if((*sr)->codigo < codigo)
         {
-            return elimi(codigo,&(*sr)->hijo_derecho);
+            (*sr)->hijo_derecho = elimi(codigo,&(*sr)->hijo_derecho);
         }
+        return *sr;
     }
     void rotacionDer(ItemMemory** sr)
     {
