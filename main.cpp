@@ -16,8 +16,8 @@ int main()
     ItemMemory* raiz10 = new ItemMemory(50,"Iris","conta");
     ItemMemory* raiz11 = new ItemMemory(62,"Iris","conta");
     ItemMemory* raiz12 = new ItemMemory(51,"Iris","conta");
-    // ItemMemory* raiz5 = new ItemMemory(5,"Jaun","conta");
-    //ItemMemory* raiz5 = new ItemMemory(5,"Jaun","conta");
+    ItemMemory* raiz13 = new ItemMemory(65,"Jaun","conta");
+    ItemMemory* raiz14 = new ItemMemory(45,"Jaun","conta");
     ArbolAvl* arbol = new ArbolAvl("arbol.dat");
     // arbol->agregarNodo(raiz);
     // arbol->agregarNodo(raiz2);
@@ -32,13 +32,16 @@ int main()
     // arbol->agregarNodo(raiz10);
     // arbol->agregarNodo(raiz11);
     // arbol->agregarNodo(raiz12);
-    // arbol->prueba();
+    // arbol->agregarNodo(raiz13);
+    // arbol->agregarNodo(raiz14);
     arbol->imprimirPreOrder();
-    // arbol->eliminar(22);
-    // arbol->imprimirPreOrder();
-    // arbol->guardarArbol("arbol2.dat");
-    // arbol->cargarArbol("arbolRotDoble.dat");
-    // arbol->imprimirInOrder();
+    arbol->eliminar(43);
+    /**
+     Ya probe el de alturas al cargar el arbol, al agregar un nuevo
+     Nodo, que se actualiza en el file y en el arbol en memoria.
+     me falta probar el eliminar que todo este correcto.
+    **/
+    arbol->imprimirPreOrder();
 
     return 0;
 }

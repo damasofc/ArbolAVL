@@ -43,6 +43,19 @@ public:
                 cont = false;
         }
     }
+    void pruebaAlturasMemory()
+    {
+        pruebaAlturasMemory(_raiz);
+    }
+    void pruebaAlturasMemory(ItemMemory* sb)
+    {   
+        if(sb == NULL)
+            return;
+        cout<<sb->codigo<<" alturas izq: "<<sb->alturaIzq<<" der: "<<sb->alturaDer<<endl;
+        pruebaAlturasMemory(sb->hijo_izquierdo);
+        pruebaAlturasMemory(sb->hijo_derecho);
+
+    }
     // void agregarNodo(int codigo,char nombre[30],char dpto[15])
     // {
     //     ItemMemory* nuevo = new ItemMemory(codigo,nombre,dpto);
@@ -57,6 +70,8 @@ public:
     // }
     void agregarNodo(ItemMemory* nuevo)
     {
+        if(buscar(nuevo->codigo) != -1)
+            return;
         if(_raiz != NULL)
         {
             int cod = _raiz->codigo;
@@ -110,6 +125,8 @@ public:
     }
     void eliminar(int codigo)
     {
+        if(buscar(codigo) == -1)
+            return;
         elimi(codigo,&_raiz);
     }
     void guardarArbol(string archivo)
@@ -455,8 +472,15 @@ private:
             (*raizItem)->hijo_izquierdo = raizRetorno;
             (*raizItem)->alturaIzq = cargarHijos(hijoIzq,&raizRetorno) +1;
         }
-        return 1;
-    }
+        if((*raizItem)->hijo_derecho != NULL && (*raizItem)->hijo_izquierdo != NULL)
+        {
+            return max((*raizItem)->alturaDer,(*raizItem)->alturaIzq);
+        }
+        bool isDer = (*raizItem)->hijo_derecho != NULL?true:false;
+        if(isDer)
+            return (*raizItem)->alturaDer;
+        return (*raizItem)->alturaIzq;
+    }   
     bool guardarRegistro(data_file file,ItemMemory* raiz)
     {
         if(raiz == NULL)
